@@ -1,57 +1,38 @@
 package org.insurgence.addons.rivalboosts.listeners;
 
 import me.rivaldev.mobsword.rivalmobswords.api.SwordEssenceReceiveEnchantEvent;
+import me.rivaldev.mobsword.rivalmobswords.api.SwordMoneyReceiveEvent;
 import me.rivaldev.mobsword.rivalmobswords.api.SwordXPGainEvent;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.insurgencedev.insurgenceboosters.api.IBoosterAPI;
-import org.insurgencedev.insurgenceboosters.data.BoosterFindResult;
+import org.insurgence.addons.rivalboosts.utils.AddonUtils;
 
 public final class RivalSwordEventListener implements Listener {
 
     @EventHandler
     private void onReceive(SwordEssenceReceiveEnchantEvent event) {
-        final String TYPE = "Essence";
-        final String NAMESPACE = "RIVAL";
-        final double[] totalMulti = {0};
+        double multi = AddonUtils.getMulti(event.getPlayer(), "Essence");
 
-        BoosterFindResult pResult = IBoosterAPI.INSTANCE.getCache(event.getPlayer()).getBoosterDataManager().findActiveBooster(TYPE, NAMESPACE);
-        if (pResult instanceof BoosterFindResult.Success boosterResult) {
-            totalMulti[0] += boosterResult.getBoosterData().getMultiplier();
+        if (multi > 0) {
+            event.setEssence(AddonUtils.calculateAmount(event.getEssence(), multi));
         }
+    }
 
-        IBoosterAPI.INSTANCE.getGlobalBoosterManager().findGlobalBooster(TYPE, NAMESPACE, globalBooster -> {
-            totalMulti[0] += globalBooster.getMultiplier();
-            return null;
-        }, () -> null);
+    @EventHandler
+    private void onReceive(SwordMoneyReceiveEvent event) {
+        double multi = AddonUtils.getMulti(event.getPlayer(), "Money");
 
-        if (totalMulti[0] > 0) {
-            event.setEssence(calculateAmount(event.getEssence(), totalMulti[0]));
+        if (multi > 0) {
+            event.setMoney(AddonUtils.calculateAmount(event.getMoney(), multi));
         }
     }
 
     @EventHandler
     private void onGain(SwordXPGainEvent event) {
-        final String TYPE = "Xp";
-        final String NAMESPACE = "RIVAL";
-        final double[] totalMulti = {0};
+        double multi = AddonUtils.getMulti(event.getPlayer(), "XP");
 
-        BoosterFindResult pResult = IBoosterAPI.INSTANCE.getCache(event.getPlayer()).getBoosterDataManager().findActiveBooster(TYPE, NAMESPACE);
-        if (pResult instanceof BoosterFindResult.Success boosterResult) {
-            totalMulti[0] += boosterResult.getBoosterData().getMultiplier();
+        if (multi > 0) {
+            event.setXP(AddonUtils.calculateAmount(event.getXP(), multi));
         }
-
-        IBoosterAPI.INSTANCE.getGlobalBoosterManager().findGlobalBooster(TYPE, NAMESPACE, globalBooster -> {
-            totalMulti[0] += globalBooster.getMultiplier();
-            return null;
-        }, () -> null);
-
-        if (totalMulti[0] > 0) {
-            event.setXP(calculateAmount(event.getXP(), totalMulti[0]));
-        }
-    }
-
-    private double calculateAmount(double amount, double multi) {
-        return amount * (multi <= 1 ? 1 + multi : multi);
     }
 }
